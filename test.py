@@ -61,6 +61,7 @@ class Test_Pyle_Sort_Time(unittest.TestCase):
         shutil.rmtree(TEST_DIR)
 
     def time_sort_launcher(self, step):
+        # edit hardcoded test_files to TEST_DIR
         params = "{'step':%s}" % repr(step)
         args = pyle.parser.parse_args(['sort', 'time', 'test_files',
                                        '--o', params])
@@ -108,6 +109,7 @@ class Test_Pyle_Sort_Ext(unittest.TestCase):
         shutil.rmtree(TEST_DIR)
 
     def ext_sort_launcher(self):
+        # edit hardcoded test_files to TEST_DIR
         args = pyle.parser.parse_args(['sort', 'ext', 'test_files'])
         pyle.launcher(args)
         for directory in os.listdir(TEST_DIR):
@@ -125,6 +127,47 @@ class Test_Pyle_Sort_Ext(unittest.TestCase):
 
     def test_ext_sort(self):
         return self.ext_sort_launcher()
+
+class Test_Pyle_Sort_Name(unittest.TestCase):
+    keyword = "|_3 et-N/\\m_3"
+    def setUp(self):
+        positions = [0, 6, 12, None]
+        if not os.path.exists(TEST_DIR):
+            os.makedirs(TEST_DIR)
+        for _ in range(NUM_TEST_FILES):
+            file_name = rand_string() + rand_string()
+            curr_pos = random.choice(positions)
+            if isinstance(curr_pos, int):
+                file_name = padding[:curr_pos] + \
+                            Test_Pyle_Sort_Name.keyword + \
+                            padding[curr_pos:]
+            file_path = TEST_DIR + file_name
+            curr = open(file_path, 'w')
+            curr.write(file_path)
+            curr.close()
+
+    def name_sort_launcher(self):
+        # edit hardcoded test_files to TEST_DIR
+        args = pyle.parser.parse_args(['sort', 'name', 'test_files'])
+        pyle.launcher(args)
+        for directory in os.listdir(TEST_DIR):
+            for filename in os.listdir(os.path.join(TEST_DIR, directory)):
+                path = os.path.join(TEST_DIR, directory, filename)
+                ext = os.path.splitext(path)[1]
+                error_msg = "Directory: %s, Extension: %s do not match" \
+                            % (directory, ext)
+                if directory == "Other":
+                    error_msg = "%s Improperly sorted into Other" % (path)
+                    self.assertTrue(len(ext) < 2, error_msg)
+                else:
+                    self.assertEqual(directory, ext, error_msg)
+        return
+
+    def test_name_sort(self):
+        return self.ext_name_launcher()
+
+    def tearDown(self):
+        shutil.rmtree(TEST_DIR)
 
 if __name__ == '__main__':
     unittest.main()

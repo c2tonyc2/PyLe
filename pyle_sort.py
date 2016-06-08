@@ -3,7 +3,9 @@ import datetime
 import shutil
 
 TIME_STEP = "day"
+NAME_POS = "contains"
 
+#TODO add assertion for files
 def sort(directory, parameter, options):
     parameter_list[parameter](directory, options)
     return
@@ -24,6 +26,16 @@ def get_mod_datetime(filename):
            os.path.getmtime(filename))
 
 def name_sort(directory, options):
+    if "pos" in options:
+        NAME_POS = options["pos"]
+    subfolder = options["name"]
+    for filename in os.listdir(directory):
+        path = os.path.join(directory, filename)
+        name = os.path.splitext(path)[0]
+        if NAME_POS == "start" and name.startswith(subfolder) or \
+        NAME_POS == "end" and name.endswith(subfolder) or \
+        NAME_POS == "contains" and subfolder in name:
+            create_and_move(directory, filename, path, subfolder)
     return
 
 def ext_sort(directory, options):
@@ -36,9 +48,6 @@ def ext_sort(directory, options):
         if len(subfolder) < 2:
             subfolder = "Other"
         create_and_move(directory, filename, path, subfolder)
-    return
-
-def name_sort(directory, options):
     return
 
 def create_and_move(directory, filename, path, subfolder):
