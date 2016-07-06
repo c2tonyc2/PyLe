@@ -36,26 +36,28 @@ def name_sort(directory, options):
         NAME_POS == "end" and name.endswith(subfolder) or \
         NAME_POS == "contains" and subfolder in name:
             create_and_move(directory, filename, path, subfolder)
+        else:
+            create_and_move(directory, filename, path, "Other")
     return
 
 def ext_sort(directory, options):
-    """Files without an extension or end in a period are stored in the
-    subfolder OTHER.
+    """Files without an extension or end in a period are not sorted.
     """
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         subfolder = os.path.splitext(path)[1]
         if len(subfolder) < 2:
-            subfolder = "Other"
+            subfolder = ""
         create_and_move(directory, filename, path, subfolder)
     return
 
 def create_and_move(directory, filename, path, subfolder):
-    newPath = os.path.join(directory, str(subfolder))
-    if not os.path.exists(newPath):
-        os.makedirs(newPath)
-    newPath = os.path.join(newPath, filename)
-    shutil.move(path, newPath)
+    if subfolder:
+        newPath = os.path.join(directory, str(subfolder))
+        if not os.path.exists(newPath):
+            os.makedirs(newPath)
+        newPath = os.path.join(newPath, filename)
+        shutil.move(path, newPath)
 
 parameter_list = {
     'time': time_sort,

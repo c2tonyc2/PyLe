@@ -62,7 +62,7 @@ class Test_Pyle_Sort_Time(unittest.TestCase):
 
     def time_sort_launcher(self, step):
         # edit hardcoded test_files to TEST_DIR
-        params = "{'step':%s}" % repr(step)
+        params = "{'step':{0}}".format(repr(step))
         args = pyle.parser.parse_args(['sort', 'time', 'test_files',
                                        '--o', params])
         pyle.launcher(args)
@@ -70,8 +70,8 @@ class Test_Pyle_Sort_Time(unittest.TestCase):
             for filename in os.listdir(os.path.join(TEST_DIR, directory)):
                 path = os.path.join(TEST_DIR, directory, filename)
                 file_m_date = str(getattr(get_mod_datetime(path), step))
-                error_msg = "Directory: %s, File date: %s do not match" \
-                            % (directory, file_m_date)
+                error_msg = "Directory: {0}, File date: {1} do not match"
+                            .format(directory, file_m_date)
                 self.assertEqual(directory, file_m_date, error_msg)
         return
 
@@ -112,23 +112,25 @@ class Test_Pyle_Sort_Ext(unittest.TestCase):
         # edit hardcoded test_files to TEST_DIR
         args = pyle.parser.parse_args(['sort', 'ext', 'test_files'])
         pyle.launcher(args)
-        for directory in os.listdir(TEST_DIR):
-            for filename in os.listdir(os.path.join(TEST_DIR, directory)):
+        all_extensions = []
+        for directory in os.walk(TEST_DIR).next()[1]:
+            all_extensions.append(directory)
+            for filename in os.listdir(os.join(TEST_DIR, directory)):
+                ext = os.path.splitext(filename)[1]
                 path = os.path.join(TEST_DIR, directory, filename)
-                ext = os.path.splitext(path)[1]
-                error_msg = "Directory: %s, Extension: %s do not match" \
-                            % (directory, ext)
-                if directory == "Other":
-                    error_msg = "%s Improperly sorted into Other" % (path)
-                    self.assertTrue(len(ext) < 2, error_msg)
-                else:
-                    self.assertEqual(directory, ext, error_msg)
+                error_msg = "Directory: {0}, Extension: {1} do not match"
+                            .format(directory, ext)
+                self.assertEqual(directory, ext, error_msg)
+        for filename in os.walk(TEST_DIR).next()[2]:
+            self.assertNotIn(filename.splitext[1], all_extensions,
+                             "{0} improperly left unsorted.".format(filename))
         return
 
     def test_ext_sort(self):
         return self.ext_sort_launcher()
 
 class Test_Pyle_Sort_Name(unittest.TestCase):
+    # Currently hard coded to test only one keyword
     keyword = "|_3 et-N/\\m_3"
     def setUp(self):
         positions = [0, 6, 12, None]
@@ -146,25 +148,41 @@ class Test_Pyle_Sort_Name(unittest.TestCase):
             curr.write(file_path)
             curr.close()
 
-    def name_sort_launcher(self):
+    def name_sort_launcher(self, pos, name=Test_Pyle_Sort_Name.keyword):
         # edit hardcoded test_files to TEST_DIR
-        args = pyle.parser.parse_args(['sort', 'name', 'test_files'])
+        params = "{'pos':{0}, 'name':{1}}".format(repr(pos), repr(name))
+        args = pyle.parser.parse_args(['sort', 'name', 'test_files',
+                                        '--o', params])
         pyle.launcher(args)
-        for directory in os.listdir(TEST_DIR):
-            for filename in os.listdir(os.path.join(TEST_DIR, directory)):
-                path = os.path.join(TEST_DIR, directory, filename)
-                ext = os.path.splitext(path)[1]
-                error_msg = "Directory: %s, Extension: %s do not match" \
-                            % (directory, ext)
-                if directory == "Other":
-                    error_msg = "%s Improperly sorted into Other" % (path)
-                    self.assertTrue(len(ext) < 2, error_msg)
-                else:
-                    self.assertEqual(directory, ext, error_msg)
+        directory = os.join(TEST_DIR, name)
+        for filename in os.listdir(directory):
+            path = os.path.join(directory, filename)
+            name = os.path.splitext(path)[0]
+            error_msg = "{0} sorted improperly".format(name, ext)
+            if pos == "start":
+                self.assertTrue(filename.startswith(name), error_msg)
+            elif pos == "end":
+                self.assertTrue(filename.endswith(name), error_msg)
+            else:
+                self.assertTrue(name in filename, error_msg)
+        for filename in os.walk(TEST_DIR).next()[2]:
+            error_msg = "{0} improperly left unsorted.".format(filename)
+            if pos == "start":
+                self.assertNotTrue(filename.startswith(name), error_msg)
+            elif pos == "end":
+                self.assertNotTrue(filename.endswith(name), error_msg)
+            else:
+                self.assertNotTrue(name not in filename, error_msg)
         return
 
-    def test_name_sort(self):
-        return self.ext_name_launcher()
+    def test_name_sort_contains(self):
+        return self.ext_name_launcher("contains")
+
+    def test_name_sort_start(self):
+        return self.ext_name_launcher("start")
+
+    def test_name_sort_end(self):
+        return self.ext_name_launcher("end")
 
     def tearDown(self):
         shutil.rmtree(TEST_DIR)
