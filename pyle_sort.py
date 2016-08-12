@@ -5,12 +5,13 @@ import shutil
 TIME_STEP = "day"
 NAME_POS = "contains"
 
+#TODO currently moves both files and directories, may want to reconsider this
 #TODO add assertion for files
 def sort(source, parameter, options):
     destination = source
     if "dest" in options:
         destination = options["dest"]
-    parameter_list[parameter](source, options)
+    parameter_list[parameter](source, destination, options)
     return
 
 def time_sort(source, destination, options):
